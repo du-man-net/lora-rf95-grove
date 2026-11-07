@@ -33,8 +33,6 @@ namespace groveRf95 {
     const CRC_ERROR = 0x20
 
     let started = false
-    let nextTo = 0xFF
-    let nextFrom = 0
     let packetId = 0
     let received = ""
     let hasPacket = false
@@ -182,15 +180,6 @@ namespace groveRf95 {
         return true
     }
 
-    /** Set the RadioHead destination and source header bytes. */
-    //% block="définir les adresses destination $to source $from"
-    //% to.min=0 to.max=255 from.min=0 from.max=255
-    //% weight=85
-    export function setAddresses(to: number, from: number): void {
-        nextTo = to & 0xFF
-        nextFrom = from & 0xFF
-    }
-
     /** Send a text packet (maximum 251 bytes). */
     //% block="envoyer texte LoRa $text"
     //% weight=80
@@ -198,8 +187,8 @@ namespace groveRf95 {
         if (!started || text.length > MAX_DATA) return
         setMode(MODE_STDBY)
         writeReg(FIFO_ADDR_PTR, 0)
-        writeReg(FIFO, nextTo)
-        writeReg(FIFO, nextFrom)
+        writeReg(FIFO, 0xFF)
+        writeReg(FIFO, 0)
         writeReg(FIFO, packetId++ & 0xFF)
         writeReg(FIFO, 0)
         let data = pins.createBuffer(text.length)
