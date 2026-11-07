@@ -99,7 +99,20 @@ namespace groveRf95 {
         request[1] = reg & 0x7F
         request[2] = count
         uartWrite(request)
-        return readBytes(count)
+        let data = readBytes(count)
+        // The Grove UART bridge can prepend its asynchronous 'I' marker to
+        // a FIFO response. The first FIFO byte is the RadioHead address, so
+        // this marker cannot be mistaken for a valid first byte here.
+        if (count > 0 && data.length == count && data[0] == 73) {
+            let last = readBytes(1)
+            if (last.length) {
+                let clean = pins.createBuffer(count)
+                for (let i = 0; i < count - 1; i++) clean[i] = data[i + 1]
+                clean[count - 1] = last[0]
+                data = clean
+            }
+        }
+        return data
     }
 
     function setMode(mode: number): void {
@@ -124,7 +137,10 @@ namespace groveRf95 {
             let data = burstRead(FIFO, count)
             if (!(flags & CRC_ERROR) && count >= 4) {
                 let text = ""
-                for (let i = 4; i < count; i++) text += String.fromCharCode(data[i])
+                let textLength = count
+                // Text packets from the Arduino sketch include a C string terminator.
+                while (textLength > 4 && data[textLength - 1] == 0) textLength--
+                for (let i = 4; i < textLength; i++) text += String.fromCharCode(data[i])
                 received = text
                 hasPacket = true
             }
