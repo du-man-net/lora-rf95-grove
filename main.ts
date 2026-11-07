@@ -149,6 +149,7 @@ namespace groveRf95 {
         txPin = tx
         rxPin = rx
         serial.redirect(txPin, rxPin, BaudRate.BaudRate57600)
+        serial.setRxBufferSize(64)
         uartPending = []
         initModeRead = -1
         basic.pause(100)
