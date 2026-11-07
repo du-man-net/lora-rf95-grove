@@ -32,8 +32,6 @@ namespace groveRf95 {
     const TX_DONE = 0x08
     const CRC_ERROR = 0x20
 
-    let txPin = SerialPin.P0
-    let rxPin = SerialPin.P1
     let started = false
     let nextTo = 0xFF
     let nextFrom = 0
@@ -152,20 +150,15 @@ namespace groveRf95 {
     }
 
     /**
-     * Configure the UART pins and initialize the RF95.
+     * Configure the UART connection on P0/P1 and initialize the RF95.
      * @param frequencyMHz RF carrier frequency, e.g. 433 or 868
-     * @param tx UART transmit pin, usually P0
-     * @param rx UART receive pin, usually P1
      */
-    //% block="initialiser RF95 fréquence (MHz) $frequencyMHz TX $tx RX $rx"
+    //% block="initialiser RF95 fréquence (MHz) $frequencyMHz"
     //% frequencyMHz.min=137 frequencyMHz.max=1020 frequencyMHz.defl=433
-    //% tx.defl=SerialPin.P0 rx.defl=SerialPin.P1
     //% weight=100
-    export function init(frequencyMHz: number, tx: SerialPin, rx: SerialPin): boolean {
+    export function init(frequencyMHz: number): boolean {
         started = false
-        txPin = tx
-        rxPin = rx
-        serial.redirect(txPin, rxPin, BaudRate.BaudRate57600)
+        serial.redirect(SerialPin.P0, SerialPin.P1, BaudRate.BaudRate57600)
         serial.setRxBufferSize(64)
         uartPending = []
         basic.pause(100)
