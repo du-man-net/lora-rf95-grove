@@ -32,8 +32,8 @@ namespace groveRf95 {
     const TX_DONE = 0x08
     const CRC_ERROR = 0x20
 
-    let txPin = SerialPin.P1
-    let rxPin = SerialPin.P2
+    let txPin = SerialPin.P0
+    let rxPin = SerialPin.P1
     let started = false
     let nextTo = 0xFF
     let nextFrom = 0
@@ -41,7 +41,6 @@ namespace groveRf95 {
     let received = ""
     let hasPacket = false
     let uartPending: number[] = []
-    let initModeRead = -1
     let lastReadHadData = false
 
     function uartWrite(bytes: Buffer): void {
@@ -137,12 +136,12 @@ namespace groveRf95 {
     /**
      * Configure the UART pins and initialize the RF95.
      * @param frequencyMHz RF carrier frequency, e.g. 433 or 868
-     * @param tx UART transmit pin, usually P1
-     * @param rx UART receive pin, usually P2
+     * @param tx UART transmit pin, usually P0
+     * @param rx UART receive pin, usually P1
      */
     //% block="initialiser RF95 fréquence (MHz) $frequencyMHz TX $tx RX $rx"
     //% frequencyMHz.min=137 frequencyMHz.max=1020 frequencyMHz.defl=433
-    //% tx.defl=SerialPin.P1 rx.defl=SerialPin.P2
+    //% tx.defl=SerialPin.P0 rx.defl=SerialPin.P1
     //% weight=100
     export function init(frequencyMHz: number, tx: SerialPin, rx: SerialPin): boolean {
         started = false
@@ -151,13 +150,11 @@ namespace groveRf95 {
         serial.redirect(txPin, rxPin, BaudRate.BaudRate57600)
         serial.setRxBufferSize(64)
         uartPending = []
-        initModeRead = -1
         basic.pause(100)
         writeReg(OP_MODE, LONG_RANGE | MODE_SLEEP)
         basic.pause(10)
         let mode = readReg(OP_MODE, 3000)
-        initModeRead = lastReadHadData ? mode : -1
-        if (initModeRead != (LONG_RANGE | MODE_SLEEP)) return false
+        if (!lastReadHadData || mode != (LONG_RANGE | MODE_SLEEP)) return false
         writeReg(FIFO_TX_BASE, 0)
         writeReg(FIFO_RX_BASE, 0)
         setMode(MODE_STDBY)
@@ -172,13 +169,6 @@ namespace groveRf95 {
         setMode(MODE_RX_CONTINUOUS)
         started = true
         return true
-    }
-
-    /** Return the OP_MODE byte read during the last init attempt (-1 means no UART byte arrived). */
-    //% block="valeur RF95 lue à l'initialisation"
-    //% weight=95
-    export function initReadValue(): number {
-        return initModeRead
     }
 
     /** Set the RadioHead destination and source header bytes. */
