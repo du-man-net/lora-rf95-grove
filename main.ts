@@ -182,16 +182,6 @@ namespace groveRf95 {
         return true
     }
 
-    /** Stop RF95 polling and release the UART pins back to the USB serial connection. */
-    //% block="arrêter RF95 et restaurer USB"
-    //% weight=90
-    export function stop(): void {
-        started = false
-        hasPacket = false
-        uartPending = []
-        serial.redirectToUSB()
-    }
-
     /** Set the RadioHead destination and source header bytes. */
     //% block="définir les adresses destination $to source $from"
     //% to.min=0 to.max=255 from.min=0 from.max=255
@@ -204,8 +194,8 @@ namespace groveRf95 {
     /** Send a text packet (maximum 251 bytes). */
     //% block="envoyer texte LoRa $text"
     //% weight=80
-    export function sendText(text: string): boolean {
-        if (!started || text.length > MAX_DATA) return false
+    export function sendText(text: string): void {
+        if (!started || text.length > MAX_DATA) return
         setMode(MODE_STDBY)
         writeReg(FIFO_ADDR_PTR, 0)
         writeReg(FIFO, nextTo)
@@ -222,21 +212,20 @@ namespace groveRf95 {
         while (!(readReg(IRQ_FLAGS) & TX_DONE) && input.runningTime() - start < 5000) basic.pause(5)
         writeReg(IRQ_FLAGS, 0xFF)
         setMode(MODE_RX_CONTINUOUS)
-        return true
     }
 
     /** Send a number using its decimal text representation. */
     //% block="envoyer nombre LoRa $value"
     //% weight=79
-    export function sendNumber(value: number): boolean {
-        return sendText("" + value)
+    export function sendNumber(value: number): void {
+        sendText("" + value)
     }
 
     /** Send a text:number pair, using ':' as the separator. */
     //% block="envoyer paire LoRa texte $text nombre $value"
     //% weight=78
-    export function sendTextNumber(text: string, value: number): boolean {
-        return sendText(text + ":" + value)
+    export function sendTextNumber(text: string, value: number): void {
+        sendText(text + ":" + value)
     }
 
     /** Poll the radio and return true when a new packet has arrived. */
