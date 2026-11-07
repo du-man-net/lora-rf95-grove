@@ -1,5 +1,8 @@
 {
     "name": "lora-rf95-grove",
+    "version": "0.1.0",
+    "description": "Pilote UART du module Grove LoRa RF95 pour micro:bit MakeCode",
+    "license": "MIT",
     "description": "",
     "dependencies": {
         "core": "*",
@@ -21,5 +24,8 @@
     "supportedTargets": [
         "microbit"
     ],
-    "preferredEditor": "blocksprj"
+    "preferredEditor": "blocksprj",
+    "public": true
 }
+
+
