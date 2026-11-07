@@ -41,6 +41,8 @@ namespace groveRf95 {
     let received = ""
     let hasPacket = false
     let uartPending: number[] = []
+    let initModeRead = -1
+    let lastReadHadData = false
 
     function uartWrite(bytes: Buffer): void {
         serial.writeBuffer(bytes)
@@ -79,6 +81,7 @@ namespace groveRf95 {
         // Discard the module's asynchronous interrupt marker, if it arrived
         // just before the register response.
         while (reply.length && reply[0] == 73) reply = readBytes(1, timeoutMs)
+        lastReadHadData = reply.length > 0
         return reply.length ? reply[0] : 0
     }
 
@@ -147,10 +150,13 @@ namespace groveRf95 {
         rxPin = rx
         serial.redirect(txPin, rxPin, BaudRate.BaudRate57600)
         uartPending = []
+        initModeRead = -1
         basic.pause(100)
         writeReg(OP_MODE, LONG_RANGE | MODE_SLEEP)
         basic.pause(10)
-        if (readReg(OP_MODE, 3000) != (LONG_RANGE | MODE_SLEEP)) return false
+        let mode = readReg(OP_MODE, 3000)
+        initModeRead = lastReadHadData ? mode : -1
+        if (initModeRead != (LONG_RANGE | MODE_SLEEP)) return false
         writeReg(FIFO_TX_BASE, 0)
         writeReg(FIFO_RX_BASE, 0)
         setMode(MODE_STDBY)
@@ -165,6 +171,13 @@ namespace groveRf95 {
         setMode(MODE_RX_CONTINUOUS)
         started = true
         return true
+    }
+
+    /** Return the OP_MODE byte read during the last init attempt (-1 means no UART byte arrived). */
+    //% block="valeur RF95 lue à l'initialisation"
+    //% weight=95
+    export function initReadValue(): number {
+        return initModeRead
     }
 
     /** Set the RadioHead destination and source header bytes. */
