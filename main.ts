@@ -40,14 +40,24 @@ namespace groveRf95 {
     let packetId = 0
     let received = ""
     let hasPacket = false
+    let uartPending: number[] = []
 
     function uartWrite(bytes: Buffer): void {
         serial.writeBuffer(bytes)
     }
 
     function readBytes(count: number): Buffer {
-        // readBuffer waits for the requested number of UART bytes.
-        return serial.readBuffer(count)
+        // Read without blocking forever when the module is disconnected or
+        // wired to the wrong pins. Keep surplus bytes for the next response.
+        let start = input.runningTime()
+        while (uartPending.length < count && input.runningTime() - start < 100) {
+            let available = serial.readBuffer(0)
+            for (let i = 0; i < available.length; i++) uartPending.push(available[i])
+            if (uartPending.length < count) basic.pause(1)
+        }
+        let result = pins.createBuffer(Math.min(count, uartPending.length))
+        for (let i = 0; i < result.length; i++) result[i] = uartPending.shift()
+        return result
     }
 
     function writeReg(reg: number, value: number): void {
@@ -132,9 +142,11 @@ namespace groveRf95 {
     //% tx.defl=SerialPin.P1 rx.defl=SerialPin.P2
     //% weight=100
     export function init(frequencyMHz: number, tx: SerialPin, rx: SerialPin): boolean {
+        started = false
         txPin = tx
         rxPin = rx
         serial.redirect(txPin, rxPin, BaudRate.BaudRate57600)
+        uartPending = []
         basic.pause(100)
         writeReg(OP_MODE, LONG_RANGE | MODE_SLEEP)
         basic.pause(10)
