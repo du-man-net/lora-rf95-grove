@@ -222,6 +222,20 @@ namespace groveRf95 {
         return true
     }
 
+    /** Send a number using its decimal text representation. */
+    //% block="envoyer nombre LoRa $value"
+    //% weight=79
+    export function sendNumber(value: number): boolean {
+        return sendText("" + value)
+    }
+
+    /** Send a text:number pair, using ':' as the separator. */
+    //% block="envoyer paire LoRa texte $text nombre $value"
+    //% weight=78
+    export function sendTextNumber(text: string, value: number): boolean {
+        return sendText(text + ":" + value)
+    }
+
     /** Poll the radio and return true when a new packet has arrived. */
     //% block="nouveau message LoRa reçu"
     //% weight=75
@@ -239,5 +253,33 @@ namespace groveRf95 {
     export function receivedText(): string {
         hasPacket = false
         return received
+    }
+
+    /** Read the last received packet as a number. */
+    //% block="nombre du dernier message LoRa"
+    //% weight=69
+    export function receivedNumber(): number {
+        hasPacket = false
+        return parseFloat(received)
+    }
+
+    /** Read the text before the first ':' in the last received packet. */
+    //% block="texte de la paire reçue LoRa"
+    //% weight=68
+    export function receivedPairText(): string {
+        hasPacket = false
+        let separator = received.indexOf(":")
+        if (separator < 0) return ""
+        return received.substr(0, separator)
+    }
+
+    /** Read the number after the first ':' in the last received packet. */
+    //% block="nombre de la paire reçue LoRa"
+    //% weight=67
+    export function receivedPairNumber(): number {
+        hasPacket = false
+        let separator = received.indexOf(":")
+        if (separator < 0) return 0
+        return parseFloat(received.substr(separator + 1))
     }
 }
