@@ -46,11 +46,11 @@ namespace groveRf95 {
         serial.writeBuffer(bytes)
     }
 
-    function readBytes(count: number): Buffer {
+    function readBytes(count: number, timeoutMs: number = 100): Buffer {
         // Read without blocking forever when the module is disconnected or
         // wired to the wrong pins. Keep surplus bytes for the next response.
         let start = input.runningTime()
-        while (uartPending.length < count && input.runningTime() - start < 100) {
+        while (uartPending.length < count && input.runningTime() - start < timeoutMs) {
             let available = serial.readBuffer(0)
             for (let i = 0; i < available.length; i++) uartPending.push(available[i])
             if (uartPending.length < count) basic.pause(1)
@@ -69,16 +69,16 @@ namespace groveRf95 {
         uartWrite(b)
     }
 
-    function readReg(reg: number): number {
+    function readReg(reg: number, timeoutMs: number = 100): number {
         let request = pins.createBuffer(3)
         request[0] = 82 // 'R'
         request[1] = reg & 0x7F
         request[2] = 1
         uartWrite(request)
-        let reply = readBytes(1)
+        let reply = readBytes(1, timeoutMs)
         // Discard the module's asynchronous interrupt marker, if it arrived
         // just before the register response.
-        while (reply.length && reply[0] == 73) reply = readBytes(1)
+        while (reply.length && reply[0] == 73) reply = readBytes(1, timeoutMs)
         return reply.length ? reply[0] : 0
     }
 
@@ -150,7 +150,7 @@ namespace groveRf95 {
         basic.pause(100)
         writeReg(OP_MODE, LONG_RANGE | MODE_SLEEP)
         basic.pause(10)
-        if (readReg(OP_MODE) != (LONG_RANGE | MODE_SLEEP)) return false
+        if (readReg(OP_MODE, 3000) != (LONG_RANGE | MODE_SLEEP)) return false
         writeReg(FIFO_TX_BASE, 0)
         writeReg(FIFO_RX_BASE, 0)
         setMode(MODE_STDBY)
