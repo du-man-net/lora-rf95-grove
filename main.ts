@@ -108,7 +108,9 @@ namespace groveRf95 {
     }
 
     function setFrequency(mhz: number): void {
-        let frf = Math.idiv(mhz * 1000000 * 524288, 32000000)
+        // 2^19 / 32 MHz = 16384 per MHz. Keep the intermediate value
+        // small enough for MakeCode's 32-bit number representation.
+        let frf = Math.idiv(mhz * 16384, 1)
         writeReg(FRF_MSB, (frf >> 16) & 0xFF)
         writeReg(FRF_MSB + 1, (frf >> 8) & 0xFF)
         writeReg(FRF_MSB + 2, frf & 0xFF)
