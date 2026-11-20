@@ -173,7 +173,8 @@ namespace groveRf95 {
         writeReg(PREAMBLE_MSB, 0)
         writeReg(PREAMBLE_MSB + 1, 8)
         setFrequency(frequencyMHz)
-        writeReg(PA_CONFIG, 0x70 | 14) // PA_BOOST, +13 dBm
+        // Match RH_RF95::setTxPower(13, false): PA_BOOST at +13 dBm.
+        writeReg(PA_CONFIG, 0x80 | (13 - 5))
         writeReg(IRQ_FLAGS, 0xFF)
         setMode(MODE_RX_CONTINUOUS)
         started = true
